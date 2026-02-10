@@ -395,6 +395,7 @@
             if (el.classList) el.classList.add('selected');
             const data = {
                 date: new Date().toLocaleString('ja-JP'),
+                time: new Date().getHours() + "時台",
                 user: selUser.value || '不明', patient: selPatient.value || '不明',
                 location: selLocation.value || '現場', content: inputText.value, solution: s
             };
