@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Care-Pro2 AI | 現場完全実動・最終版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d4af37;
+            --bg: #f4f7f9;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: white;
+            width: 100%;
+            max-width: 550px;
+            padding: 25px;
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-top: 6px solid var(--accent);
+            position: relative;
+        }
+
+        .title {
+            color: var(--primary);
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .sub {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        /* 音声入力ガイド */
+        .guide-box {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            font-size: 12px;
+            color: #795548;
+            line-height: 1.4;
+        }
+
+        .guide-box strong {
+            color: #ef6c00;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .input-group {
+            background: #fafafa;
+            border: 2px solid #eee;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 17px;
+            min-height: 80px;
+            resize: none;
+            font-family: inherit;
+            color: #333;
+            outline: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 18px;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        #micBtn {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        #micBtn.active {
+            background: #e74c3c;
+            animation: pulse 1s infinite;
+        }
+
+        #analyzeBtn {
+            background: var(--accent);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #status {
+            margin-top: 15px;
+            color: var(--accent);
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 20px;
+        }
+
+        .loading {
+            display: none;
+            margin: 25px 0;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .sol-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        .sol-item {
+            background: #fff;
+            border-left: 6px solid var(--accent);
+            padding: 18px;
+            border-radius: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .sol-item.selected {
+            border-left-color: #27ae60;
+            background: #f0fff4;
+            border-width: 8px;
+        }
+
+        .custom-sol {
+            margin-top: 15px;
+            background: #fff8e1;
+            border: 2px dashed #d4af37;
+            border-radius: 18px;
+            padding: 15px;
+        }
+
+        .custom-sol textarea {
+            min-height: 50px;
+            font-size: 14px;
+            border: none;
+            background: transparent;
+            width: 100%;
+            border-bottom: 1px solid #d4af37;
+            margin-bottom: 8px;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div class="title">Care-Pro2 AI</div>
+        <div class="sub">現場の「不注意・見落とし」を防ぐ最強の記録支援</div>
+
+        <!-- 選択入力エリア -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+            <div>
+                <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">担当者</label>
+                <select id="selectUser"
+                    style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px;">
+                    <option value="">読込中...</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">対象利用者</label>
+                <select id="selectPatient"
+                    style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px;">
+                    <option value="">読込中...</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">場所</label>
+                <select id="selectLocation"
+                    style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px;">
+                    <option value="">読込中...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 音声入力ガイド -->
+        <div class="guide-box">
+            <strong>🎤 音声入力のコツ（事象とリスクを教えてください）</strong>
+            「[何が起きたか] ＋ [なぜ危なかったか/なぜ起きたか]」を話してください。<br>
+            例：車椅子から立ち上がろうとして、足元が滑って転落しそうになった
+        </div>
+
+        <div class="input-group">
+            <textarea id="inputText" placeholder="ここに事象とリスクを入力してください..."></textarea>
+        </div>
+
+        <div class="controls">
+            <button id="micBtn" class="btn">🎤 音声入力</button>
+            <button id="analyzeBtn" class="btn">解析</button>
+        </div>
+
+        <div id="status"></div>
+        <div id="loading" class="loading">ジェームズが現場の真実を分析中...</div>
+
+        <div id="solArea" style="display:none;">
+            <div id="solList" class="sol-list"></div>
+
+            <div class="custom-sol">
+                <div style="font-size: 12px; font-weight: bold; color: var(--accent); margin-bottom: 5px;">📍
+                    現場独自の対策（自由入力・音声可）</div>
+                <textarea id="customSolText" placeholder="現場で決めた即応対策を入力してください"></textarea>
+                <button id="customSendBtn" class="btn"
+                    style="width:100%; padding: 10px; background: #27ae60; color: white;">この内容で登録</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxl9tuNWZB_ukwRMf2KH2uPNuyHhvGvUD7hHAMpVaRaSs1eEVjdd6Vzs66TxBkmr2oPdg/exec';
+        const API_KEY = 'app-jCYBv1fEqIbe66K9e63iSt3M';
+        const DIFY_URL = 'https://api.dify.ai/v1/chat-messages';
+
+        const micBtn = document.getElementById('micBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const inputText = document.getElementById('inputText');
+        const customSolText = document.getElementById('customSolText');
+        const customSendBtn = document.getElementById('customSendBtn');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const solArea = document.getElementById('solArea');
+        const solList = document.getElementById('solList');
+        const selUser = document.getElementById('selectUser');
+        const selPatient = document.getElementById('selectPatient');
+        const selLocation = document.getElementById('selectLocation');
+
+        let recognition, isRecording = false;
+
+        async function init() {
+            renderHistory();
+            status.innerText = 'シート同期中...';
+            try {
+                const res = await fetch(`${GAS_URL}?type=master&t=${Date.now()}`);
+                const data = await res.json();
+                if (data.users && data.users.length > 0) {
+                    updateSelect(selUser, data.users, '担当者');
+                    updateSelect(selPatient, data.patients, '利用者');
+                    updateSelect(selLocation, data.locations, '場所');
+                    status.innerText = 'シート同期完了';
+                }
+            } catch (e) { status.innerText = '同期失敗（ブラウザ更新してください）'; }
+        }
+
+        function updateSelect(el, list, placeholder) {
+            el.innerHTML = `<option value="">${placeholder}</option>`;
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = opt.innerText = item;
+                el.appendChild(opt);
+            });
+        }
+
+        function setupRecognition() {
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!Speech) return null;
+            const rec = new Speech();
+            rec.lang = 'ja-JP'; rec.interimResults = true; rec.continuous = false;
+            rec.onstart = () => { isRecording = true; micBtn.classList.add('active'); status.innerText = '聞き取り中...'; };
+            rec.onresult = (e) => {
+                let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) { t += e.results[i][0].transcript; }
+                if (solArea.style.display === 'block') customSolText.value = t; else inputText.value = t;
+            };
+            rec.onend = () => {
+                isRecording = false; micBtn.classList.remove('active');
+                if (solArea.style.display !== 'block' && inputText.value.length > 0) analyze();
+            };
+            return rec;
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (!recognition) recognition = setupRecognition();
+            if (isRecording) recognition.stop(); else recognition.start();
+        });
+
+        analyzeBtn.addEventListener('click', () => { if (inputText.value.length > 0) analyze(); });
+
+        async function analyze() {
+            loading.style.display = 'block'; solArea.style.display = 'none'; status.innerText = '';
+            const text = inputText.value;
+            const location = selLocation.value || "現場";
+
+            try {
+                const response = await fetch(DIFY_URL, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        inputs: {},
+                        query: `あなたは主君の記録を支える忠実な執事「ジェームズ」です。
+主君から報告された「${location}」での「事象」と「リスク」を深く汲み取り、スタッフの意識を瞬時に引き締める【即応対策】を提示せよ。
+
+【主君からの報告】: "${text}"
+
+【ジェームズへの厳命】:
+1. 事象への即応: 場所や選択済みの情報は把握している。音声入力された「事象とそれによるリスク」に全知能を集中せよ。
+2. 介護記録文脈の徹底: 
+   「〇〇（原因）だったから、次からは〇〇（具体的な対策）を徹底する」
+   「〇〇（リスク）を回避するため、〇〇（予防）に努める」
+   という、介護記録としてそのまま使える、かつ因果関係の明確な文章を書け。
+3. 抽象論を排し、物理的対策を出せ。
+
+【回答形式】:
+以下の6視点【環境】【声掛け】【用具】【見守り】【共有】【心理】で、各1〜2行。
+各回答の冒頭には視点名を記し、番号ラベル（視点1等）は一切不要。速やかに内容のみを提示せよ。`,
+                        user: "carepro-user", response_mode: "blocking"
+                    })
+                });
+                const data = await response.json();
+                const solutions = data.answer.split('\n').filter(s => s.length > 5).slice(0, 6);
+                displaySolutions(solutions);
+            } catch (e) {
+                const action = text.includes("落ち") ? "転落" : text.includes("滑") ? "転倒" : text.includes("むせ") ? "誤飲" : "動作";
+                displaySolutions([
+                    `【環境】${location}での${action}リスクに対し、周辺の整理整頓と足元の安全確認を徹底し、物理的な不安要素を排除します。`,
+                    `【声掛け】${action}の兆候が見られた際、一呼吸置かせる「ゆっくりと」の声掛けを介助の要所に組み込み、意識の不一致を防ぎます。`,
+                    `【用具】${location}で使用する備品の状態を再点検し、本来の${action}防止機能が100%発揮されるよう、常に最適な配置に努めます。`,
+                    `【見守り】${action}が発生しやすい動作の瞬間は、介助者の視線を外さず、物理的な防護距離を確実に保つ見守りを継続します。`,
+                    `【共有】今回の${location}での${action}事案を直ちに全体共有し、同様の危険箇所がないか全パラメター（全スタッフ）で一斉点検いたします。`,
+                    `【心理】慣れによる「いつもの動作」に潜む油断を再認識。${location}に立つ一歩目から、プロとしての高い緊張感で介助に臨みます。`
+                ]);
+            }
+            loading.style.display = 'none';
+        }
+
+        function displaySolutions(solutions) {
+            solList.innerHTML = '';
+            solutions.forEach(s => {
+                const div = document.createElement('div'); div.className = 'sol-item';
+                div.innerHTML = `${s}`;
+                div.onclick = () => selectSolution(s, div);
+                solList.appendChild(div);
+            });
+            solArea.style.display = 'block';
+        }
+
+        customSendBtn.onclick = () => { if (customSolText.value) selectSolution(`【独自】${customSolText.value}`, customSendBtn); };
+
+        async function selectSolution(s, el) {
+            if (el.classList && el.classList.contains('selected')) return;
+            if (el.classList) el.classList.add('selected');
+            const data = {
+                date: new Date().toLocaleString('ja-JP'),
+                user: selUser.value || '不明', patient: selPatient.value || '不明',
+                location: selLocation.value || '現場', content: inputText.value, solution: s
+            };
+            try {
+                await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                alert('登録完了しました！');
+                saveLocalHistory(data);
+                solArea.style.display = 'none'; inputText.value = ''; customSolText.value = '';
+            } catch (e) { alert('通信エラー'); }
+        }
+
+        function saveLocalHistory(data) {
+            const history = JSON.parse(localStorage.getItem('care_history') || '[]');
+            history.unshift(data);
+            localStorage.setItem('care_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('care_history') || '[]');
+            if (history.length === 0) return;
+            const area = document.getElementById('historyArea');
+            area.style.display = 'block';
+            document.getElementById('historyList').innerHTML = history.slice(0, 10).map(item => `
+            <div style="background:#fff;padding:12px;border-radius:12px;margin-bottom:8px;font-size:12px;border:1px solid #eee;">
+                <strong>${item.user}</strong> → <strong>${item.patient}</strong> <small style="float:right">${item.date.split(' ')[1]}</small>
+                <div style="color:#666;font-size:11px;">報告: ${item.content}</div>
+                <div style="color:var(--accent);font-size:11px;font-weight:bold;">対策: ${item.solution}</div>
+            </div>
+        `).join('');
+        }
+
+        window.onload = init;
+    </script>
+
+    <div id="historyArea" style="width:100%;max-width:550px;margin-top:30px;display:none;">
+        <div style="font-size:14px;font-weight:bold;margin-bottom:10px;">📍 本日の登録履歴</div>
+        <div id="historyList"></div>
+    </div>
+</body>
+
+</html>
