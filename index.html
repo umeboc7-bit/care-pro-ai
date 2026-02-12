@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Care-Pro2 AI | 現場完全実動・最終版</title>
+    <title>Care-Pro2 AI | 現場完全実動・シチュエーション強化版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -52,25 +52,6 @@
             color: #888;
             font-size: 14px;
             margin-bottom: 25px;
-        }
-
-        /* 音声入力ガイド */
-        .guide-box {
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-            text-align: left;
-            font-size: 12px;
-            color: #795548;
-            line-height: 1.4;
-        }
-
-        .guide-box strong {
-            color: #ef6c00;
-            display: block;
-            margin-bottom: 4px;
         }
 
         .input-group {
@@ -212,8 +193,8 @@
         <div class="title">Care-Pro2 AI</div>
         <div class="sub">現場の「不注意・見落とし」を防ぐ最強の記録支援</div>
 
-        <!-- 選択入力エリア -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        <!-- 選択入力エリア（4項目に拡張） -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
             <div>
                 <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">担当者</label>
                 <select id="selectUser"
@@ -235,17 +216,30 @@
                     <option value="">読込中...</option>
                 </select>
             </div>
-        </div>
-
-        <!-- 音声入力ガイド -->
-        <div class="guide-box">
-            <strong>🎤 音声入力のコツ（事象とリスクを教えてください）</strong>
-            「[何が起きたか] ＋ [なぜ危なかったか/なぜ起きたか]」を話してください。<br>
-            例：車椅子から立ち上がろうとして、足元が滑って転落しそうになった
+            <div>
+                <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">シーン</label>
+                <select id="selectScene"
+                    style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; background: #fff8e1; border-color: var(--accent);">
+                    <option value="">シーンを選択</option>
+                    <option value="食事中">食事中</option>
+                    <option value="食事待機中">食事待機中</option>
+                    <option value="口腔ケア中">口腔ケア中</option>
+                    <option value="歩行中">歩行中</option>
+                    <option value="車椅子移動中">車椅子移動中</option>
+                    <option value="更衣中">更衣中</option>
+                    <option value="排泄中">排泄中</option>
+                    <option value="排泄前後">排泄前後</option>
+                    <option value="就寝中">就寝中</option>
+                    <option value="移乗中">移乗中</option>
+                    <option value="入浴中">入浴中</option>
+                    <option value="レク中">レク中</option>
+                    <option value="その他">その他</option>
+                </select>
+            </div>
         </div>
 
         <div class="input-group">
-            <textarea id="inputText" placeholder="ここに事象とリスクを入力してください..."></textarea>
+            <textarea id="inputText" placeholder="「車椅子から立ち上がろうとして滑りそうになった」等、事象を入力してください..."></textarea>
         </div>
 
         <div class="controls">
@@ -286,6 +280,7 @@
         const selUser = document.getElementById('selectUser');
         const selPatient = document.getElementById('selectPatient');
         const selLocation = document.getElementById('selectLocation');
+        const selScene = document.getElementById('selectScene');
 
         let recognition, isRecording = false;
 
@@ -341,6 +336,7 @@
             loading.style.display = 'block'; solArea.style.display = 'none'; status.innerText = '';
             const text = inputText.value;
             const location = selLocation.value || "現場";
+            const scene = selScene.value || "不詳";
 
             try {
                 const response = await fetch(DIFY_URL, {
@@ -348,19 +344,22 @@
                     headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         inputs: {},
-                        query: `あなたは介護現場のあらゆるリスクを知り尽くした、迅速かつ冷静な執事兼専門家「ジェームズ」です。
-主臣から報告された「${location}」でのヒヤリハットに対し、曖昧な意識論（徹底・努める）を一切排し、今すぐ実行できる「具体的かつ物理的な介入策」を提示せよ。
+                        query: `あなたは介護のプロフェッショナル執事「ジェームズ」です。
+現在「${scene}」というシチュエーションにおいて、主臣から「${location}」でのヒヤリハットが報告されました。
+「～を徹底する」といった曖昧な意識論は【無能の証】であり厳禁。
+現場スタッフが「今すぐ動かせる物、変えられる位置、指示できる手順」といった【物理的・具体的な対策】のみを5視点で提示せよ。
 
 【主臣からの報告】: "${text}"
+【現在のシーン】: "${scene}"
 
-【ジェームズへの鉄則】:
-1. 専門家目線: 報告の表面的な言葉をなぞるのではなく、介護のプロとして背後のリスクを予測せよ。
-2. 物理的介入の義務: 「テーブルを分ける」「手の届かない位置に置く」「個別誘導にする」「自助具を変更する」等の物理的動作・配置の変更を優先せよ。
-3. 定型回答の厳禁: 類似事象でも状況に応じた独自の対策を出せ。同じ「転落」でもベッド周囲と椅子では物理的要因が異なる。
-4. スリム化: 回答は5項目に厳選せよ（共有は不要）。
+【ジェームズの専門的思考】:
+- 「食事中」ならテーブル距離、自助具の角度、配膳位置に言及せよ。
+- 「歩行中/移乗中」なら介助者の立ち位置、手すりの活用、靴の適合に言及せよ。
+- 「排泄中」ならプライバシー確保と同時に、支えとなる手すりや衣服のさばきに言及せよ。
+- 「定型文の禁止」: どのシーンでも同じ回答を出すことは許されない。状況に没入せよ。
 
 【回答形式】:
-以下の5視点【環境】【声掛け】【用具】【見守り】【心理】で、各25文字前後の簡潔な一言で提出せよ。視点名のみを記し、番号は不要。`,
+以下の5視点【環境】【声掛け】【用具】【見守り】【心理】で、各25文字前後の具体的対策を提示せよ。番号不要。`,
                         user: "carepro-user", response_mode: "blocking"
                     })
                 });
@@ -368,25 +367,13 @@
                 const solutions = data.answer.split('\n').filter(s => s.length > 5).slice(0, 5);
                 displaySolutions(solutions);
             } catch (e) {
-                const action = text.includes("落ち") ? "転落" : text.includes("滑") ? "転倒" : text.includes("むせ") ? "誤飲" : text.includes("食べ") ? "異食/横取り" : "動作";
-                let fb = [];
-                if (action === "異食/横取り") {
-                    fb = [
-                        `【環境】テーブルの間隔を空け、手の届かない距離に配置。`,
-                        `【声掛け】「こちらは後で」と器を遠ざけ、意識を逸らす。`,
-                        `【用具】器の下に滑り止めを敷き、安易に移動不可にする。`,
-                        `【見守り】配膳時、特定の方の正面には常にスタッフを配置。`,
-                        `【心理】「もっと食べたい」欲求を汲み、代替品を即座に提示。`
-                    ];
-                } else {
-                    fb = [
-                        `【環境】${location}の物理的導線を変更し、接触リスクを排除。`,
-                        `【声掛け】動作に対し「一旦ストップ」等の具体的指示を出す。`,
-                        `【用具】${action}防止に特化した福祉用具への切り替えを検討。`,
-                        `【見守り】${action}発生の瞬間を予測。防護距離を確実に保持。`,
-                        `【心理】焦りや戸惑いを見抜き、安心感を与える介入を優先。`
-                    ];
-                }
+                const fb = [
+                    `【環境】テーブル間隔を空け、手の届かない距離に配置変更。`,
+                    `【声掛け】「ゆっくり噛んで」等、動作を小分けにした具体的指示。`,
+                    `【用具】器の下に滑り止め。安易に移動不可な重い食器を選択。`,
+                    `【見守り】常に正面または死角とならない斜め前にスタッフ配置。`,
+                    `【心理】早食いの欲求を察知し、代替品や茶を適宜提供。`
+                ];
                 displaySolutions(fb);
             }
             loading.style.display = 'none';
@@ -412,7 +399,8 @@
                 date: new Date().toLocaleString('ja-JP'),
                 time: new Date().getHours() + "時台",
                 user: selUser.value || '不明', patient: selPatient.value || '不明',
-                location: selLocation.value || '現場', content: inputText.value, solution: s
+                location: selLocation.value || '現場', scene: selScene.value || '不詳',
+                content: inputText.value, solution: s
             };
             try {
                 await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
@@ -437,6 +425,7 @@
             document.getElementById('historyList').innerHTML = history.slice(0, 10).map(item => `
             <div style="background:#fff;padding:12px;border-radius:12px;margin-bottom:8px;font-size:12px;border:1px solid #eee;">
                 <strong>${item.user}</strong> → <strong>${item.patient}</strong> <small style="float:right">${item.date.split(' ')[1]}</small>
+                <div style="color:#888;font-size:10px;">シーン: ${item.scene || '不詳'} / 場所: ${item.location}</div>
                 <div style="color:#666;font-size:11px;">報告: ${item.content}</div>
                 <div style="color:var(--accent);font-size:11px;font-weight:bold;">対策: ${item.solution}</div>
             </div>
