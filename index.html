@@ -220,20 +220,7 @@
                 <label style="font-size: 10px; color: #888; display: block; margin-bottom: 4px;">シーン</label>
                 <select id="selectScene"
                     style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 13px; background: #fff8e1; border-color: var(--accent);">
-                    <option value="">シーンを選択</option>
-                    <option value="食事中">食事中</option>
-                    <option value="食事待機中">食事待機中</option>
-                    <option value="口腔ケア中">口腔ケア中</option>
-                    <option value="歩行中">歩行中</option>
-                    <option value="車椅子移動中">車椅子移動中</option>
-                    <option value="更衣中">更衣中</option>
-                    <option value="排泄中">排泄中</option>
-                    <option value="排泄前後">排泄前後</option>
-                    <option value="就寝中">就寝中</option>
-                    <option value="移乗中">移乗中</option>
-                    <option value="入浴中">入浴中</option>
-                    <option value="レク中">レク中</option>
-                    <option value="その他">その他</option>
+                    <option value="">読込中...</option>
                 </select>
             </div>
         </div>
@@ -294,6 +281,10 @@
                     updateSelect(selUser, data.users, '担当者');
                     updateSelect(selPatient, data.patients, '利用者');
                     updateSelect(selLocation, data.locations, '場所');
+                    // スプレッドシートからのシーン読み込みに対応
+                    if (data.scenes && data.scenes.length > 0) {
+                        updateSelect(selScene, data.scenes, 'シーンを選択');
+                    }
                     status.innerText = 'シート同期完了';
                 }
             } catch (e) { status.innerText = '同期失敗（ブラウザ更新してください）'; }
