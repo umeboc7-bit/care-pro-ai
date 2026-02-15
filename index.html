@@ -237,7 +237,7 @@
         <div id="status"></div>
         <div id="loading" class="loading">ジェームズが現場の真実を分析中...</div>
 
-        <div id="solArea" style="display:none;">
+        <div id="solArea" style="display:block;">
             <div id="solList" class="sol-list"></div>
 
             <div class="custom-sol">
@@ -334,25 +334,14 @@
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        inputs: {},
-                        query: `あなたは介護のプロフェッショナル執事「ジェームズ」です。
-現在「${scene}」というシチュエーションにおいて、主臣から「${location}」でのヒヤリハットが報告されました。
-「～を徹底する」といった曖昧な意識論は【無能の証】であり厳禁。
-現場スタッフが「今すぐ動かせる物、変えられる位置、指示できる手順」といった【物理的・具体的な対策】のみを5視点で提示せよ。
-
-【主臣からの報告】: "${text}"
-【現在のシーン】: "${scene}"
-
-【ジェームズの専門的思考】:
-- 「食事中」ならテーブル距離、自助具の角度、配膳位置に言及せよ。
-- 「歩行中/移乗中」なら介助者の立ち位置、手すりの活用、靴の適合に言及せよ。
-- 「排泄中」ならプライバシー確保と同時に、支えとなる手すりや衣服のさばきに言及せよ。
-- 「定型文の禁止」: どのシーンでも同じ回答を出すことは許されない。状況に没入せよ。
-
-【回答形式】:
-以下の5視点【環境】【声掛け】【用具】【見守り】【心理】で、各25文字前後の具体的対策を提示せよ。番号不要。`,
-                        user: "carepro-user", response_mode: "blocking"
-                    })
+                    inputs: {
+                        scene: scene,
+                        location: location,
+                        text: text
+                    },
+                    query: "分析を実行してください。",
+                    user: "carepro-user", response_mode: "blocking"
+                })
                 });
                 const data = await response.json();
                 const solutions = data.answer.split('\n').filter(s => s.length > 5).slice(0, 5);
@@ -430,6 +419,6 @@
         <div style="font-size:14px;font-weight:bold;margin-bottom:10px;">📍 本日の登録履歴</div>
         <div id="historyList"></div>
     </div>
-<div id="debugLog" style="position:fixed;bottom:0;left:0;width:100%;max-height:150px;overflow-y:auto;background:rgba(0,0,0,0.8);color:#0f0;font-size:10px;z-index:9999;display:none;padding:5px;font-family:monospace;"></div><script>window.onerror=function(m,s,l,c,e){document.getElementById("debugLog").style.display="block";document.getElementById("debugLog").innerHTML+="[ERROR] "+m+"<br>";};const originalFetch=window.fetch;window.fetch=async(...args)=>{const res=await originalFetch(...args);if(args[0].includes("dify.ai")){const clone=res.clone();const text=await clone.text();document.getElementById("debugLog").style.display="block";document.getElementById("debugLog").innerHTML+="[Dify Response] "+res.status+" "+text.substring(0,100)+"...<br>";}return res;};</script></body>
+<div id="debugLog" style="position:fixed;bottom:0;left:0;width:100%;max-height:150px;overflow-y:auto;background:rgba(0,0,0,0.8);color:#0f0;font-size:10px;z-index:9999;display:block;padding:5px;font-family:monospace;"></div><script>window.onerror=function(m,s,l,c,e){document.getElementById("debugLog").style.display="block";document.getElementById("debugLog").innerHTML+="[ERROR] "+m+"<br>";};const originalFetch=window.fetch;window.fetch=async(...args)=>{const res=await originalFetch(...args);if(args[0].includes("dify.ai")){const clone=res.clone();const text=await clone.text();document.getElementById("debugLog").style.display="block";document.getElementById("debugLog").innerHTML+="[Dify Response] "+res.status+" "+text.substring(0,100)+"...<br>";}return res;};</script></body>
 
 </html>
