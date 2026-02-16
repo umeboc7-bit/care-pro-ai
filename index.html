@@ -405,8 +405,27 @@
         }
 
         function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('care_history') || '[]');
+            let history = JSON.parse(localStorage.getItem('care_history') || '[]');
             if (history.length === 0) return;
+
+            // --- 日付リセットロジック追加 ---
+            const today = new Date().toLocaleDateString('ja-JP');
+            const filteredHistory = history.filter(item => {
+                // item.date (toLocaleString形式) の先頭部分が今日と一致するか確認
+                return item.date.startsWith(today);
+            });
+
+            // 履歴が今日のものでなければLocalStorageを更新
+            if (filteredHistory.length !== history.length) {
+                history = filteredHistory;
+                localStorage.setItem('care_history', JSON.stringify(history));
+                if (history.length === 0) {
+                    document.getElementById('historyArea').style.display = 'none';
+                    return;
+                }
+            }
+            // ----------------------------
+
             const area = document.getElementById('historyArea');
             area.style.display = 'block';
             document.getElementById('historyList').innerHTML = history.slice(0, 10).map(item => `
